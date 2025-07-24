@@ -1,26 +1,34 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { setDoc, doc } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
 
 const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in both fields');
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        Alert.alert('Success', 'Account created!');
-        navigation.replace('Login');
-      })
-      .catch((error) => {
-        Alert.alert('Signup Error', error.message);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        createdAt: new Date()
       });
+
+      Alert.alert('Success', 'Account created!');
+      navigation.replace('Login');
+
+    } catch (error) {
+      Alert.alert('Signup Error', error.message);
+    }
   };
 
   return (
@@ -30,8 +38,8 @@ const SignupScreen = ({ navigation }) => {
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        style={styles.input}
         autoCapitalize="none"
+        style={styles.input}
       />
       <TextInput
         placeholder="Password"
