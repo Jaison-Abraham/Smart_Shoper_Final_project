@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -8,9 +8,9 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  TouchableOpacity
-} from 'react-native';
-import { auth, db } from '../firebaseConfig';
+  TouchableOpacity,
+} from "react-native";
+import { auth, db } from "../firebaseConfig";
 import {
   collection,
   addDoc,
@@ -18,32 +18,31 @@ import {
   query,
   orderBy,
   where,
-  getDocs
-} from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+  getDocs,
+} from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ExpenseTrackerScreen() {
   const user = auth.currentUser;
   const navigation = useNavigation();
 
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
   const [expenses, setExpenses] = useState([]);
   const [total, setTotal] = useState(0);
   const [youOwe, setYouOwe] = useState(0);
   const [owedToYou, setOwedToYou] = useState(0);
 
-  // Fetch personal expenses
   useEffect(() => {
     if (!user) return;
 
-    const expenseRef = collection(db, 'users', user.uid, 'personalExpenses');
-    const q = query(expenseRef, orderBy('timestamp', 'desc'));
+    const expenseRef = collection(db, "users", user.uid, "personalExpenses");
+    const q = query(expenseRef, orderBy("timestamp", "desc"));
 
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const data = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       setExpenses(data);
@@ -54,7 +53,6 @@ export default function ExpenseTrackerScreen() {
     return () => unsubscribe();
   }, [user]);
 
-  // Fetch group expenses and calculate "You Owe" and "Owed to You"
   useEffect(() => {
     if (!user?.email) return;
 
@@ -62,21 +60,21 @@ export default function ExpenseTrackerScreen() {
 
     const fetchGroupBalances = async () => {
       const groupsQuery = query(
-        collection(db, 'groups'),
-        where('members', 'array-contains', user.email)
+        collection(db, "groups"),
+        where("members", "array-contains", user.email)
       );
 
       const groupSnap = await getDocs(groupsQuery);
 
-      groupSnap.forEach(groupDoc => {
+      groupSnap.forEach((groupDoc) => {
         const groupId = groupDoc.id;
-        const expensesRef = collection(db, 'groups', groupId, 'expenses');
+        const expensesRef = collection(db, "groups", groupId, "expenses");
 
-        const unsubscribe = onSnapshot(expensesRef, snap => {
+        const unsubscribe = onSnapshot(expensesRef, (snap) => {
           let owe = 0;
           let owed = 0;
 
-          snap.forEach(doc => {
+          snap.forEach((doc) => {
             const exp = doc.data();
             const splits = exp.splits || {};
             const amount = exp.amount || 0;
@@ -85,10 +83,8 @@ export default function ExpenseTrackerScreen() {
             const yourShare = splits[user.email] || 0;
 
             if (paidBy === user.email) {
-              // You paid → others owe you
               owed += amount - yourShare;
             } else {
-              // Someone else paid → you owe
               owe += yourShare;
             }
           });
@@ -103,26 +99,26 @@ export default function ExpenseTrackerScreen() {
 
     fetchGroupBalances();
 
-    return () => unsubscribeFns.forEach(unsub => unsub());
+    return () => unsubscribeFns.forEach((unsub) => unsub());
   }, [user]);
 
   const handleAddExpense = async () => {
     const amountNumber = parseFloat(amount);
     if (isNaN(amountNumber) || amountNumber <= 0) {
-      return Alert.alert('Invalid Input', 'Amount must be a positive number');
+      return Alert.alert("Invalid Input", "Amount must be a positive number");
     }
 
     try {
-      await addDoc(collection(db, 'users', user.uid, 'personalExpenses'), {
+      await addDoc(collection(db, "users", user.uid, "personalExpenses"), {
         description,
         amount: amountNumber,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
-      setDescription('');
-      setAmount('');
+      setDescription("");
+      setAmount("");
     } catch (err) {
-      Alert.alert('Error', 'Failed to add expense.');
+      Alert.alert("Error", "Failed to add expense.");
     }
   };
 
@@ -135,7 +131,6 @@ export default function ExpenseTrackerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Summary Cards */}
       <View style={styles.cardContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>You Owe</Text>
@@ -146,8 +141,6 @@ export default function ExpenseTrackerScreen() {
           <Text style={styles.cardValue}>${owedToYou.toFixed(2)}</Text>
         </View>
       </View>
-
-      {/* Personal Expense Form */}
       <Text style={styles.sectionTitle}>Add Personal Expense</Text>
       <TextInput
         placeholder="Description"
@@ -164,21 +157,18 @@ export default function ExpenseTrackerScreen() {
       />
       <Button title="Add Expense" onPress={handleAddExpense} />
 
-      {/* Total */}
-      <Text style={styles.totalText}>Total Personal Expenses: ${total.toFixed(2)}</Text>
-
-      {/* Expense List */}
+      <Text style={styles.totalText}>
+        Total Personal Expenses: ${total.toFixed(2)}
+      </Text>
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
         renderItem={renderExpenseItem}
         contentContainerStyle={{ paddingBottom: 80 }}
       />
-
-      {/* Go to Shared Expenses */}
       <TouchableOpacity
         style={styles.sharedButton}
-        onPress={() => navigation.navigate('GroupExpense')}
+        onPress={() => navigation.navigate("GroupExpense")}
       >
         <Text style={styles.sharedButtonText}>Go to Shared Expenses</Text>
       </TouchableOpacity>
@@ -187,69 +177,80 @@ export default function ExpenseTrackerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+  },
 
   cardContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
   summaryCard: {
-    backgroundColor: '#f0f4ff',
+    backgroundColor: "#f0f4ff",
     padding: 15,
     borderRadius: 10,
-    width: '48%'
+    width: "48%",
   },
-  cardTitle: { fontSize: 16, color: '#555' },
-  cardValue: { fontSize: 20, fontWeight: 'bold', color: '#007AFF' },
+  cardTitle: {
+    fontSize: 16,
+    color: "#555",
+  },
+  cardValue: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#007AFF",
+  },
 
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 10,
-    marginTop: 10
+    marginTop: 10,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   totalText: {
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 16,
     marginTop: 10,
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   expenseItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 12,
     borderBottomWidth: 1,
-    borderColor: '#eee'
+    borderColor: "#eee",
   },
 
   expenseText: {
-    fontSize: 15
+    fontSize: 15,
   },
 
   sharedButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 10,
     left: 16,
     right: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 14,
-    borderRadius: 10
+    borderRadius: 10,
   },
 
   sharedButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    textAlign: 'center'
-  }
+    textAlign: "center",
+  },
 });
