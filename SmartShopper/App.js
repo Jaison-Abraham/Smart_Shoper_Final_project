@@ -12,6 +12,8 @@ import GroupExpenseScreen from "./screens/GroupExpenseScreen";
 import AddGroupExpenseScreen from "./screens/AddGroupExpenseScreen";
 import GroupDetailsScreen from "./screens/GroupDetailsScreen";
 import AddGroupScreen from "./screens/AddGroupScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,6 +30,8 @@ function MainTabs() {
             iconName = focused ? "cart" : "cart-outline";
           } else if (route.name === "Expenses") {
             iconName = focused ? "wallet" : "wallet-outline";
+          } else if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -39,6 +43,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Grocery" component={GroceryListScreen} />
       <Tab.Screen name="Expenses" component={ExpenseTrackerScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
