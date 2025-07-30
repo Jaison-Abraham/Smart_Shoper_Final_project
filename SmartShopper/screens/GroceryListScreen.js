@@ -75,19 +75,11 @@ const GroceryListScreen = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={[
-        styles.itemContainer,
-        item.purchased && styles.purchasedItem,
-      ]}
+      style={[styles.itemContainer, item.purchased && styles.purchasedItem]}
       onPress={() => togglePurchased(item)}
       onLongPress={() => deleteItem(item.id)}
     >
-      <Text
-        style={[
-          styles.itemText,
-          item.purchased && styles.purchasedText,
-        ]}
-      >
+      <Text style={[styles.itemText, item.purchased && styles.purchasedText]}>
         {item.name} - {item.quantity}
       </Text>
     </TouchableOpacity>

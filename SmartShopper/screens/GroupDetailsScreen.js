@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Platform,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
@@ -106,20 +107,25 @@ export default function GroupDetailsScreen() {
 
   const renderExpense = ({ item }) => (
     <View style={styles.expenseCard}>
-      <Text style={styles.expenseTitle}>{item.description}</Text>
-      <Text>${item.amount.toFixed(2)}</Text>
-      <Text>Paid by: {emailToNameMap[item.paidBy] || item.paidBy}</Text>
-      <Text>Split:</Text>
+      <View style={styles.expenseHeader}>
+        <Text style={styles.expenseTitle}>{item.description}</Text>
+        <Text style={styles.amount}>${item.amount.toFixed(2)}</Text>
+      </View>
+
+      <Text style={styles.metaText}>
+        Paid by: {emailToNameMap[item.paidBy] || item.paidBy}
+      </Text>
+
+      <Text style={styles.metaText}>Split:</Text>
       {Object.entries(item.splits).map(([email, share]) => (
-        <Text key={email}>
-          - {emailToNameMap[email] || email}: ${share.toFixed(2)}
+        <Text key={email} style={styles.splitText}>
+          {emailToNameMap[email] || email}: ${share.toFixed(2)}
         </Text>
       ))}
 
       {item.paidBy === currentUser.email && (
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={styles.iconBtn}
             onPress={() =>
               navigation.navigate("AddGroupExpense", {
                 group,
@@ -127,13 +133,12 @@ export default function GroupDetailsScreen() {
               })
             }
           >
-            <Ionicons name="create-outline" size={20} color="blue" />
+            <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => handleDelete(item.id)}
-          >
-            <Ionicons name="trash-outline" size={20} color="red" />
+          <TouchableOpacity onPress={() => handleDelete(item.id)}>
+            <Text style={[styles.actionText, { color: "#FF3B30" }]}>
+              Delete
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -142,7 +147,7 @@ export default function GroupDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView style={styles.innerContainer}>
         <Text style={styles.sectionTitle}>Group Balances</Text>
         {Object.entries(balances).map(([email, balance]) => (
           <Text key={email} style={styles.balanceText}>
@@ -176,40 +181,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  innerContainer: {
+    padding: Platform.OS === "ios" ? 20 : 0,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 16,
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 8,
+    color: "#333",
   },
   balanceText: {
     fontSize: 16,
-    marginVertical: 4,
+    marginVertical: 6,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    color: "#444",
   },
   expenseCard: {
-    padding: 12,
-    marginVertical: 6,
-    borderRadius: 8,
-    backgroundColor: "#f1f1f1",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    padding: 18,
+    marginVertical: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+  expenseHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
   },
   expenseTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  amount: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#10B981",
+  },
+  metaText: {
+    fontSize: 14,
+    color: "#4B5563",
+    marginBottom: 2,
+  },
+  splitText: {
+    fontSize: 14,
+    color: "#374151",
+    paddingLeft: 10,
   },
   actionRow: {
     flexDirection: "row",
-    marginTop: 6,
+    justifyContent: "flex-end",
+    marginTop: 12,
+    gap: 20,
   },
-  iconBtn: {
-    marginRight: 12,
+  actionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#2563EB",
   },
+
   fab: {
     position: "absolute",
-    right: 20,
     bottom: 30,
+    right: 20,
     backgroundColor: "#007AFF",
+    width: 60,
+    height: 60,
     borderRadius: 30,
-    padding: 16,
-    elevation: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 8,
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
   },
 });

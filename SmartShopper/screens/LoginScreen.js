@@ -1,32 +1,32 @@
-import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert
-} from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+  Alert,
+} from "react-native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in both fields');
+      Alert.alert("Error", "Please fill in both fields");
       return;
     }
 
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
-        navigation.replace('Home');
+        navigation.replace("Home");
       })
       .catch((error) => {
-        Alert.alert('Login Error', error.message);
+        Alert.alert("Login Error", error.message);
       });
   };
 
@@ -55,7 +55,10 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.loginText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate("Signup")} style={styles.linkBtn}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Signup")}
+        style={styles.linkBtn}
+      >
         <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -67,43 +70,43 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 30,
-    textAlign: 'center',
-    color: '#333',
+    textAlign: "center",
+    color: "#333",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   loginBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
   },
   loginText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   linkBtn: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   linkText: {
-    color: '#007AFF',
-    fontWeight: '600',
+    color: "#007AFF",
+    fontWeight: "600",
   },
 });

@@ -6,10 +6,19 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Platform,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebaseConfig";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 
 export default function GroupExpenseScreen() {
   const [groups, setGroups] = useState([]);
@@ -34,6 +43,27 @@ export default function GroupExpenseScreen() {
 
     return () => unsubscribe();
   }, []);
+  const handleDeleteGroup = (groupId, groupName) => {
+    Alert.alert(
+      "Delete Group",
+      `You are about to delete the group "${groupName}". This will remove all its data. Continue?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "groups", groupId));
+            } catch (error) {
+              console.error("Error deleting group:", error);
+              Alert.alert("Error", "Failed to delete the group.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,19 +73,23 @@ export default function GroupExpenseScreen() {
           <Text style={styles.addButton}>+ Add Group</Text>
         </TouchableOpacity>
       </View>
-
-      <FlatList
-        data={groups}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.groupItem}
-            onPress={() => navigation.navigate("GroupDetails", { group: item })}
-          >
-            <Text style={styles.groupName}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <View style={styles.innerContainer}>
+        <FlatList
+          data={groups}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.groupItem}
+              onPress={() =>
+                navigation.navigate("GroupDetails", { group: item })
+              }
+              onLongPress={() => handleDeleteGroup(item.id, item.name)} // <--- added
+            >
+              <Text style={styles.groupName}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -65,6 +99,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#fff",
+  },
+  innerContainer: {
+    padding: Platform.OS === "ios" ? 20 : 0,
   },
   header: {
     flexDirection: "row",

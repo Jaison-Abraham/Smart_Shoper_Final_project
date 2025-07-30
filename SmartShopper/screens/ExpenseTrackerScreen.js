@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { auth, db } from "../firebaseConfig";
 import {
@@ -56,50 +57,57 @@ export default function ExpenseTrackerScreen() {
   useEffect(() => {
     if (!user?.email) return;
 
-    const unsubscribeFns = [];
+    const groupQuery = query(
+      collection(db, "groups"),
+      where("members", "array-contains", user.email)
+    );
 
-    const fetchGroupBalances = async () => {
-      const groupsQuery = query(
-        collection(db, "groups"),
-        where("members", "array-contains", user.email)
-      );
-
-      const groupSnap = await getDocs(groupsQuery);
+    let unsubscribeList = [];
+    const groupBalances = {};
+    const setupListeners = async () => {
+      const groupSnap = await getDocs(groupQuery);
 
       groupSnap.forEach((groupDoc) => {
         const groupId = groupDoc.id;
         const expensesRef = collection(db, "groups", groupId, "expenses");
 
-        const unsubscribe = onSnapshot(expensesRef, (snap) => {
+        const unsub = onSnapshot(expensesRef, (snap) => {
           let owe = 0;
           let owed = 0;
 
           snap.forEach((doc) => {
-            const exp = doc.data();
-            const splits = exp.splits || {};
-            const amount = exp.amount || 0;
-            const paidBy = exp.paidBy;
-
-            const yourShare = splits[user.email] || 0;
+            const data = doc.data();
+            const { amount, paidBy, splits = {} } = data;
+            const userShare = splits[user.email] || 0;
 
             if (paidBy === user.email) {
-              owed += amount - yourShare;
+              const othersOwe = Object.entries(splits)
+                .filter(([email]) => email !== user.email)
+                .reduce((sum, [, share]) => sum + share, 0);
+              owed += othersOwe;
             } else {
-              owe += yourShare;
+              owe += userShare;
             }
           });
+          groupBalances[groupId] = { owe, owed };
+          let totalOwe = 0;
+          let totalOwed = 0;
+          Object.values(groupBalances).forEach(({ owe, owed }) => {
+            totalOwe += owe;
+            totalOwed += owed;
+          });
 
-          setYouOwe(owe);
-          setOwedToYou(owed);
+          setYouOwe(totalOwe);
+          setOwedToYou(totalOwed);
         });
 
-        unsubscribeFns.push(unsubscribe);
+        unsubscribeList.push(unsub);
       });
     };
 
-    fetchGroupBalances();
+    setupListeners();
 
-    return () => unsubscribeFns.forEach((unsub) => unsub());
+    return () => unsubscribeList.forEach((unsub) => unsub());
   }, [user]);
 
   const handleAddExpense = async () => {
@@ -131,41 +139,46 @@ export default function ExpenseTrackerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.cardContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>You Owe</Text>
-          <Text style={styles.cardValue}>${youOwe.toFixed(2)}</Text>
+      <View style={styles.innerContainer}>
+        <View style={styles.cardContainer}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.cardTitle}>You Owe</Text>
+            <Text style={styles.cardValue}>${youOwe.toFixed(2)}</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.cardTitle}>Owed to You</Text>
+            <Text style={styles.cardValue}>${owedToYou.toFixed(2)}</Text>
+          </View>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Owed to You</Text>
-          <Text style={styles.cardValue}>${owedToYou.toFixed(2)}</Text>
-        </View>
-      </View>
-      <Text style={styles.sectionTitle}>Add Personal Expense</Text>
-      <TextInput
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Amount ($)"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        style={styles.input}
-      />
-      <Button title="Add Expense" onPress={handleAddExpense} />
 
-      <Text style={styles.totalText}>
-        Total Personal Expenses: ${total.toFixed(2)}
-      </Text>
-      <FlatList
-        data={expenses}
-        keyExtractor={(item) => item.id}
-        renderItem={renderExpenseItem}
-        contentContainerStyle={{ paddingBottom: 80 }}
-      />
+        <Text style={styles.sectionTitle}>Add Personal Expense</Text>
+        <TextInput
+          placeholder="Description"
+          value={description}
+          onChangeText={setDescription}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Amount ($)"
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+        <Button title="Add Expense" onPress={handleAddExpense} />
+
+        <Text style={styles.totalText}>
+          Total Personal Expenses: ${total.toFixed(2)}
+        </Text>
+
+        <FlatList
+          data={expenses}
+          keyExtractor={(item) => item.id}
+          renderItem={renderExpenseItem}
+          contentContainerStyle={{ paddingBottom: 80 }}
+        />
+      </View>
+
       <TouchableOpacity
         style={styles.sharedButton}
         onPress={() => navigation.navigate("GroupExpense")}
@@ -182,7 +195,10 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#fff",
   },
-
+  innerContainer: {
+    padding: Platform.OS === "ios" ? 20 : 0,
+    flex: 1,
+  },
   cardContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -193,6 +209,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     width: "48%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardTitle: {
     fontSize: 16,
@@ -203,14 +224,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#007AFF",
   },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
     marginTop: 10,
   },
-
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -218,14 +237,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-
   totalText: {
     fontWeight: "600",
     fontSize: 16,
     marginTop: 10,
     marginBottom: 10,
   },
-
   expenseItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -233,11 +250,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-
   expenseText: {
     fontSize: 15,
   },
-
   sharedButton: {
     position: "absolute",
     bottom: 10,
@@ -247,7 +262,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
   },
-
   sharedButtonText: {
     color: "#fff",
     fontSize: 16,

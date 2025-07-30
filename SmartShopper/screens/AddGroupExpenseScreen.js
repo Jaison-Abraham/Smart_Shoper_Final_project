@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { auth, db } from "../firebaseConfig";
@@ -21,6 +22,13 @@ import {
 
 export default function AddGroupExpenseScreen() {
   const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({
+      title: editExpense ? "Edit Expense" : "Add Expense",
+      headerBackTitle: "Back",
+    });
+  }, [navigation, editExpense]);
+
   const { group, editExpense } = useRoute().params;
   const currentUser = auth.currentUser;
 
@@ -118,7 +126,7 @@ export default function AddGroupExpenseScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <View style={styles.innerContainer}>
         <Text style={styles.title}>{editExpense ? "Edit" : "Add"} Expense</Text>
 
         <TextInput
@@ -175,13 +183,24 @@ export default function AddGroupExpenseScreen() {
               />
             </View>
           ))}
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.footerButton, { backgroundColor: "#FF3B30" }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.btnText}>Cancel</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.addBtn} onPress={handleAddExpense}>
-          <Text style={styles.btnText}>
-            {editExpense ? "Update Expense" : "Add Expense"}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={[styles.footerButton, { backgroundColor: "#34C759" }]}
+            onPress={handleAddExpense}
+          >
+            <Text style={styles.btnText}>
+              {editExpense ? "Update Expense" : "Add Expense"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -190,6 +209,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  innerContainer: {
+    padding: Platform.OS === "ios" ? 20 : 0,
   },
   title: {
     fontSize: 22,
@@ -246,5 +268,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "600",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    paddingVertical: 10,
+  },
+  footerButton: {
+    flex: 1,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
 });
