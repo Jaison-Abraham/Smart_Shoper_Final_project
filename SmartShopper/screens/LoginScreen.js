@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
@@ -32,6 +33,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Image source={require("../assets/app_icon.png")} style={styles.logo} />
       <Text style={styles.title}>Smart Shopper </Text>
 
       <TextInput
@@ -69,10 +71,17 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
     flex: 1,
     justifyContent: "center",
     padding: 24,
     backgroundColor: "#fff",
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+    borderRadius: 20,
   },
   title: {
     fontSize: 28,
@@ -85,6 +94,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 12,
+    width:300,
     borderRadius: 8,
     marginBottom: 16,
     backgroundColor: "#f9f9f9",
@@ -94,6 +104,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
+    width:100,
   },
   loginText: {
     color: "white",
